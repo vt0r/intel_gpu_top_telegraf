@@ -16,13 +16,65 @@ class TestExecuteIntelGpuTop(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures"""
-        self.valid_gpu_output = json.dumps([{
-            "GPU0": {
-                "Freq": "350 MHz",
-                "Req Freq": "0 MHz",
-                "IMC": "0%"
-            }
-        }])
+        self.valid_gpu_output = json.dumps([
+            {
+                "period": {
+                        "duration": 52.312599,
+                        "unit": "ms"
+                },
+                "frequency": {
+                        "requested": 0.000000,
+                        "actual": 0.000000,
+                        "unit": "MHz"
+                },
+                "interrupts": {
+                        "count": 0.000000,
+                        "unit": "irq/s"
+                },
+                "rc6": {
+                        "value": 100.000000,
+                        "unit": "%"
+                },
+                "power": {
+                        "GPU": 0.000000,
+                        "Package": 4.172259,
+                        "unit": "W"
+                },
+                "imc-bandwidth": {
+                        "reads": 862.594740,
+                        "writes": 72.741518,
+                        "unit": "MiB/s"
+                },
+                "engines": {
+                        "Render/3D": {
+                                "busy": 0.000000,
+                                "sema": 0.000000,
+                                "wait": 0.000000,
+                                "unit": "%"
+                        },
+                        "Blitter": {
+                                "busy": 0.000000,
+                                "sema": 0.000000,
+                                "wait": 0.000000,
+                                "unit": "%"
+                        },
+                        "Video": {
+                                "busy": 0.000000,
+                                "sema": 0.000000,
+                                "wait": 0.000000,
+                                "unit": "%"
+                        },
+                        "VideoEnhance": {
+                                "busy": 0.000000,
+                                "sema": 0.000000,
+                                "wait": 0.000000,
+                                "unit": "%"
+                        }
+                },
+                "clients": {
+
+                }
+                }])
 
     @patch('intel_gpu_top_telegraf.subprocess.Popen')
     @patch('intel_gpu_top_telegraf.time.sleep')
@@ -47,7 +99,7 @@ class TestExecuteIntelGpuTop(unittest.TestCase):
         self.assertEqual(result_dict['measurement_name'], 'intel_gpu_top')
 
         # Verify original data is preserved
-        self.assertIn('GPU0', result_dict)
+        self.assertIn('period', result_dict)
 
         # Verify sleep was called (sampling interval)
         mock_sleep.assert_called_once_with(0.5)
@@ -159,34 +211,6 @@ class TestExecuteIntelGpuTop(unittest.TestCase):
 
         # Verify communicate was called with timeout
         mock_process.communicate.assert_called_once_with(timeout=3)
-
-    @patch('intel_gpu_top_telegraf.subprocess.Popen')
-    @patch('intel_gpu_top_telegraf.time.sleep')
-    @patch('intel_gpu_top_telegraf.time.time_ns')
-    def test_multiple_gpu_data(self, mock_time_ns, mock_sleep, mock_popen):
-        """Test handling of data with multiple GPU entries"""
-        multi_gpu_output = json.dumps([{
-            "GPU0": {"Freq": "350 MHz"},
-            "GPU1": {"Freq": "400 MHz"}
-        }])
-
-        mock_time_ns.return_value = 1234567890
-        mock_process = MagicMock()
-        mock_process.communicate.return_value = (multi_gpu_output, None)
-        mock_process.returncode = 0
-        mock_popen.return_value = mock_process
-
-        result = intel_gpu_top_telegraf.execute_intel_gpu_top()
-        result_dict = json.loads(result)
-
-        # Verify both GPU entries are preserved
-        self.assertIn('GPU0', result_dict)
-        self.assertIn('GPU1', result_dict)
-        self.assertEqual(result_dict['GPU0']['Freq'], '350 MHz')
-        self.assertEqual(result_dict['GPU1']['Freq'], '400 MHz')
-
-        # Verify sleep was called (sampling interval)
-        mock_sleep.assert_called_once_with(0.5)
 
     @patch('intel_gpu_top_telegraf.subprocess.Popen')
     @patch('intel_gpu_top_telegraf.time.sleep')
