@@ -67,6 +67,21 @@ with the `data_format` type of `json`.
   json_time_format = "unix_ns"
 ```
 
+## Testing
+
+A comprehensive (I hope!) test suite is included to validate the script's
+functionality.
+
+### Running Tests
+
+To run the tests:
+
+``` bash
+pytest test_intel_gpu_top_telegraf.py -v
+```
+
+We use mocking so that `intel_gpu_top` is not actually required to test.
+
 ## Output Example
 
 ```json
