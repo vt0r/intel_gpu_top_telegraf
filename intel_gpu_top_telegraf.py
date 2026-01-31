@@ -54,8 +54,12 @@ def execute_intel_gpu_top() -> str:
         logger.critical('"%s" exited non-zero (%s). %s\nOutput: %s\nErrors: %s', cmd, rc, exec_failure_msg, out, err)
         sys.exit(1)
 
-    # Time to read the JSON and inject a timestamp + a measurement name
-    json_dict = json.loads(out)
+    # Time to try to read the JSON and inject a timestamp + a measurement name
+    try:
+        json_dict = json.loads(out)
+    except json.JSONDecodeError as e:
+        logger.critical('Failed to parse JSON output from "%s": %s', cmd, e)
+        sys.exit(1)
     if not isinstance(json_dict, list) or len(json_dict) == 0:
         logger.critical('Invalid JSON structure output from "%s". Expected a non-empty list, got: %s', cmd, out)
         sys.exit(1)
